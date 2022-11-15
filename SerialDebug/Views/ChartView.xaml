@@ -1,0 +1,350 @@
+﻿<UserControl
+    x:Class="SerialDebug.Views.ChartView"
+
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+    xmlns:local="clr-namespace:SerialDebug.Views"
+    xmlns:converters="clr-namespace:SerialDebug.Converters"
+    xmlns:Common="clr-namespace:SerialDebug.Views.Common"
+    xmlns:be="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:va="clr-namespace:SerialDebug.VaildationRules"
+    xmlns:pro="clr-namespace:SerialDebug.Proxy"
+    xmlns:ctx="clr-namespace:LiveChartsCore.Kernel;assembly=LiveChartsCore"
+    mc:Ignorable="d"
+    d:DesignHeight="450" d:DesignWidth="800"
+    xmlns:ani="clr-namespace:SerialDebug.Animation"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+    TextElement.FontWeight="Regular"
+    TextElement.FontSize="13"
+    TextOptions.TextFormattingMode="Ideal"
+    TextOptions.TextRenderingMode="Auto"
+    Background="{DynamicResource MaterialDesignPaper}"
+    FontFamily="{DynamicResource MaterialDesignFont}">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <converters:StringToBrushConverter x:Key="stringToBrushConverter" />
+            <converters:ValueToIndexConverter x:Key="valueToIndexConverter" />
+            <converters:SeriesToColorConverter x:Key="seriesToColorConverter" />
+            <!--绑定当前数据上下文-->
+            <pro:BindingProxy x:Key="bindingProxy" Data="{Binding}" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <materialDesign:TransitioningContent>
+        <materialDesign:TransitioningContent.OpeningEffects>
+            <materialDesign:TransitionEffect Kind="FadeIn"></materialDesign:TransitionEffect>
+        </materialDesign:TransitioningContent.OpeningEffects>
+        <materialDesign:DialogHost x:Name="dialogHost">
+            <materialDesign:DialogHost.DialogContent>
+                <StackPanel Margin="16">
+                    <TextBlock Text="添加数据源:" FontSize="15" />
+                    <TextBox
+                        materialDesign:HintAssist.Hint="名字"
+                        Style="{StaticResource MaterialDesignFloatingHintTextBox}" FontSize="18" Width="220">
+                        <TextBox.Text>
+                            <Binding Path="AddName" UpdateSourceTrigger="PropertyChanged">
+                                <Binding.ValidationRules>
+                                    <va:NameNotEmptyAndRepeatValidtionRule>
+                                        <va:NameNotEmptyAndRepeatValidtionRule.Parmams>
+                                            <va:ValidationParams
+                                                Source="{Binding Data.ChartDataModels, Source={StaticResource bindingProxy}}" />
+                                        </va:NameNotEmptyAndRepeatValidtionRule.Parmams>
+                                    </va:NameNotEmptyAndRepeatValidtionRule>
+                                </Binding.ValidationRules>
+                            </Binding>
+                        </TextBox.Text>
+                    </TextBox>
+                    <DockPanel LastChildFill="False" Margin="0, 16, 0, 16">
+                        <TextBlock Text="粗细:" VerticalAlignment="Center" FontSize="18" />
+                        <ComboBox Width="50" DockPanel.Dock="Right"
+                                  SelectedIndex="{Binding AddThinkess, Converter={StaticResource valueToIndexConverter}}">
+                            <ComboBoxItem Content="1" IsSelected="True" />
+                            <ComboBoxItem Content="2" />
+                            <ComboBoxItem Content="3" />
+                            <ComboBoxItem Content="4" />
+                            <ComboBoxItem Content="5" />
+                        </ComboBox>
+                    </DockPanel>
+
+                    <DockPanel LastChildFill="False" Margin="0, 0, 0, 16">
+                        <TextBlock Text="颜色: " VerticalAlignment="Center" Margin="0, 0, 0, 5" FontSize="18"
+                                   DockPanel.Dock="Left" />
+                        <Button Background="{Binding AddColor}" Width="60"
+                                Command="{Binding DataContext.OpenColorSelectorDialog, RelativeSource={RelativeSource AncestorType=UserControl, Mode=FindAncestor}}"
+                                BorderThickness="0" DockPanel.Dock="Right" />
+                    </DockPanel>
+
+                    <UniformGrid Rows="1">
+                        <Button Style="{StaticResource MaterialDesignFlatButton}" Content="确定" FontSize="18"
+                                Command="{Binding AddChartDataSourceAccept}" />
+                        <Button Style="{StaticResource MaterialDesignFlatButton}" Content="取消" FontSize="18"
+                                Command="{Binding AddChartDataSourceCancel}" />
+                    </UniformGrid>
+                </StackPanel>
+            </materialDesign:DialogHost.DialogContent>
+            <materialDesign:DrawerHost x:Name="drawHost" IsRightDrawerOpen="False">
+                <materialDesign:DrawerHost.RightDrawerContent>
+                    <DockPanel Width="500" LastChildFill="False" Margin="10">
+                        <GroupBox Header="当前数据源" DockPanel.Dock="Top">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel>
+                                    <ItemsControl ItemsSource="{Binding ChartDataModels}"
+                                                  HorizontalContentAlignment="Stretch" DockPanel.Dock="Top">
+                                        <ItemsControl.Style>
+                                            <Style TargetType="ItemsControl">
+                                                <Style.Triggers>
+                                                    <Trigger Property="HasItems" Value="False">
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate>
+                                                                    <DockPanel Margin="10">
+                                                                        <materialDesign:PackIcon
+                                                                            Kind="CloseCircleOutline"
+                                                                            DockPanel.Dock="Top"
+                                                                            HorizontalAlignment="Center" Width="50"
+                                                                            Height="50" />
+                                                                        <TextBlock FontSize="30" Text="没有数据源"
+                                                                            HorizontalAlignment="Center" />
+                                                                    </DockPanel>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ItemsControl.Style>
+
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <materialDesign:TransitioningContent
+                                                    OpeningEffect="{materialDesign:TransitionEffect SlideInFromRight}">
+                                                    <materialDesign:Card Margin="5" Padding="5">
+                                                        <DockPanel LastChildFill="False" Margin="16">
+                                                            <TextBox
+                                                                Width="180"
+                                                                materialDesign:HintAssist.FloatingScale="0.90"
+                                                                materialDesign:HintAssist.Hint="名字"
+                                                                materialDesign:TextFieldAssist.TextBoxViewMargin="1 0 1 0"
+                                                                FontSize="16"
+                                                                Style="{StaticResource MaterialDesignFloatingHintTextBox}">
+                                                                <be:Interaction.Triggers>
+                                                                    <be:EventTrigger EventName="LostFocus">
+                                                                        <be:InvokeCommandAction
+                                                                            Command="{Binding DataContext.UpdateChartDataSourceName, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
+                                                                            CommandParameter="{Binding }" />
+                                                                    </be:EventTrigger>
+                                                                </be:Interaction.Triggers>
+
+                                                                <TextBox.Text>
+                                                                    <Binding Path="Name"
+                                                                             UpdateSourceTrigger="PropertyChanged">
+                                                                        <Binding.ValidationRules>
+                                                                            <va:NameNotEmptyAndRepeatValidtionRule>
+                                                                                <va:NameNotEmptyAndRepeatValidtionRule.Parmams>
+                                                                                    <va:ValidationParams
+                                                                                        Source="{Binding Data.ChartDataModels, Source={StaticResource bindingProxy}}" />
+                                                                                </va:NameNotEmptyAndRepeatValidtionRule.Parmams>
+                                                                            </va:NameNotEmptyAndRepeatValidtionRule>
+                                                                        </Binding.ValidationRules>
+                                                                    </Binding>
+                                                                </TextBox.Text>
+                                                            </TextBox>
+                                                            <StackPanel VerticalAlignment="Bottom" Margin="10, 0, 0, 0">
+                                                                <TextBlock Text="粗细" />
+                                                                <ComboBox
+                                                                    SelectedIndex="{Binding Thickness, Converter={StaticResource valueToIndexConverter}}"
+                                                                    Width="50">
+                                                                    <be:Interaction.Triggers>
+                                                                        <be:EventTrigger EventName="SelectionChanged">
+                                                                            <be:InvokeCommandAction
+                                                                                Command="{Binding DataContext.UpdateChartDataSourceThinkess, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
+                                                                                CommandParameter="{Binding }" />
+                                                                        </be:EventTrigger>
+                                                                    </be:Interaction.Triggers>
+                                                                    <ComboBoxItem Content="1" />
+                                                                    <ComboBoxItem Content="2" />
+                                                                    <ComboBoxItem Content="3" />
+                                                                    <ComboBoxItem Content="4" />
+                                                                    <ComboBoxItem Content="5" />
+                                                                </ComboBox>
+                                                            </StackPanel>
+
+                                                            <StackPanel Margin="60, 0, 0, 0" VerticalAlignment="Bottom">
+                                                                <TextBlock Text="颜色" HorizontalAlignment="Center"
+                                                                           Margin="0, 0, 0, 5" />
+                                                                <Button
+                                                                    Background="{Binding Color, Converter={StaticResource stringToBrushConverter}}"
+                                                                    Width="60"
+                                                                    Command="{Binding DataContext.OpenColorSelectorDialog, RelativeSource={RelativeSource AncestorType=UserControl, Mode=FindAncestor}}"
+                                                                    CommandParameter="{Binding Name}"
+                                                                    BorderThickness="0" />
+                                                            </StackPanel>
+
+                                                            <Button
+                                                                Style="{StaticResource MaterialDesignFloatingActionMiniButton}"
+                                                                DockPanel.Dock="Right"
+                                                                Command="{Binding DataContext.RemoveSourceItemCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding Name}">
+                                                                <materialDesign:PackIcon Kind="Close" />
+                                                            </Button>
+                                                        </DockPanel>
+                                                    </materialDesign:Card>
+                                                </materialDesign:TransitioningContent>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <Separator Style="{StaticResource MaterialDesignSeparator}" />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="1*" />
+                                            <ColumnDefinition Width="1*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button x:Name="addChartDataSourceButton"
+                                                Style="{StaticResource MaterialDesignFloatingActionButton}"
+                                                HorizontalAlignment="Center" Margin="10" ToolTip="添加数据源"
+                                                Command="{Binding AddChartDataSourceCommand}">
+                                            <materialDesign:PackIcon Kind="Add" Width="30" Height="30" />
+                                        </Button>
+                                        <Button Style="{StaticResource MaterialDesignFloatingActionButton}"
+                                                Grid.Column="1" HorizontalAlignment="Center" Margin="10"
+                                                ToolTip="清空数据源" Command="{Binding ClearChartDataSourceCommand}">
+                                            <materialDesign:PackIcon Kind="Delete" Width="30" Height="30" />
+                                        </Button>
+                                    </Grid>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </GroupBox>
+                        <Separator Style="{StaticResource MaterialDesignSeparator}" DockPanel.Dock="Top" />
+                        <GroupBox Header="配置" DockPanel.Dock="Top">
+                            <DockPanel>
+                                <materialDesign:Card Margin="5" Padding="10" DockPanel.Dock="Top">
+                                    <DockPanel
+                                        LastChildFill="False">
+                                        <TextBlock Text="缩放选择: " FontSize="20" VerticalAlignment="Center" />
+                                        <RadioButton
+                                            x:Name="bothZoomRadio"
+                                            DockPanel.Dock="Right"
+                                            Margin="4"
+                                            Content="X AND Y"
+                                            Style="{StaticResource MaterialDesignTabRadioButton}" />
+                                        <RadioButton
+                                            x:Name="YZoomRadio"
+                                            DockPanel.Dock="Right"
+                                            Margin="4"
+                                            Content="Y"
+                                            Style="{StaticResource MaterialDesignTabRadioButton}" />
+                                        <RadioButton
+                                            x:Name="XZoomRadio"
+                                            DockPanel.Dock="Right"
+                                            Margin="4"
+                                            Content="X"
+                                            IsChecked="True"
+
+                                            Style="{StaticResource MaterialDesignTabRadioButton}" />
+                                    </DockPanel>
+                                </materialDesign:Card>
+                            </DockPanel>
+                        </GroupBox>
+                    </DockPanel>
+                </materialDesign:DrawerHost.RightDrawerContent>
+                <Grid>
+                    <lvc:CartesianChart x:Name="chart" Series="{Binding SeriesSource}" XAxes="{Binding XAxes}"
+                                        YAxes="{Binding YAxes}" ZoomMode="X" LegendPosition="Right">
+                        <lvc:CartesianChart.LegendTemplate>
+                            <DataTemplate>
+                                <ItemsControl
+                                    ItemsSource="{Binding Data.ChartDataModels, Source={StaticResource bindingProxy}}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <materialDesign:Card Margin="10" Padding="10">
+                                                <DockPanel>
+                                                    <TextBlock Text="{Binding Name}" DockPanel.Dock="Left"
+                                                               VerticalAlignment="Center" Margin="0, 0, 10, 0" />
+                                                    <Border CornerRadius="10" Width="20" Height="20"
+                                                            Background="{Binding Color, Converter={StaticResource stringToBrushConverter}}"
+                                                            DockPanel.Dock="Right" />
+                                                </DockPanel>
+                                            </materialDesign:Card>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </DataTemplate>
+                        </lvc:CartesianChart.LegendTemplate>
+                        <lvc:CartesianChart.TooltipTemplate>
+                            <DataTemplate>
+                                <Border Background="#303030">
+                                    <ItemsControl
+                                        ItemsSource="{Binding Points, RelativeSource={RelativeSource AncestorType=lvc:DefaultTooltip}}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                            Orientation="Vertical" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type ctx:ChartPoint}">
+                                                <materialDesign:Card Padding="10">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding AsTooltipString}" Margin="0 0 8 0"
+                                                                   VerticalAlignment="Center" />
+                                                        <Border Width="20" Height="20" CornerRadius="10"
+                                                                Background="{Binding Context.Series, Converter={StaticResource seriesToColorConverter}}" />
+                                                    </StackPanel>
+                                                </materialDesign:Card>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                            </DataTemplate>
+                        </lvc:CartesianChart.TooltipTemplate>
+                    </lvc:CartesianChart>
+
+                    <ToggleButton
+                        Width="40"
+                        Height="40"
+                        Content="{materialDesign:PackIcon Kind=Settings}"
+                        IsChecked="{Binding ElementName=drawHost, Path=IsRightDrawerOpen, Mode=TwoWay}"
+                        Style="{StaticResource MaterialDesignActionToggleButton}"
+                        ToolTip="打开设置" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" />
+
+                    <ToggleButton
+                        IsChecked="{Binding IsStopReceiveData}"
+                        Width="40"
+                        Height="40"
+                        materialDesign:ToggleButtonAssist.OnContent="{materialDesign:PackIcon Kind=Play}"
+                        Content="{materialDesign:PackIcon Kind=Stop}"
+                        Style="{StaticResource MaterialDesignActionToggleButton}"
+                        ToolTip="停止接受" Margin="0, 60, 10, 0" HorizontalAlignment="Right" VerticalAlignment="Top" />
+
+                    <Button Style="{StaticResource MaterialDesignFloatingActionMiniButton}" HorizontalAlignment="Right"
+                            VerticalAlignment="Top" Margin="0, 110, 10, 0" ToolTip="清除波形"
+                            Command="{Binding ClearReceiveDataCommand}">
+                        <materialDesign:PackIcon Kind="Delete" />
+                    </Button>
+
+                    <Button Style="{StaticResource MaterialDesignFloatingActionMiniButton}" HorizontalAlignment="Right"
+                            VerticalAlignment="Top" Margin="0, 160, 10, 0" ToolTip="清除缩放"
+                            Command="{Binding ResetChartXAndY}">
+                        <materialDesign:PackIcon Kind="Refresh" />
+                    </Button>
+                </Grid>
+            </materialDesign:DrawerHost>
+        </materialDesign:DialogHost>
+    </materialDesign:TransitioningContent>
+</UserControl>

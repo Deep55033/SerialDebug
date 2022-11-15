@@ -1,0 +1,327 @@
+﻿<UserControl x:Class="SerialDebug.Views.MajorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:SerialDebug.Views"
+             xmlns:domain="clr-namespace:SerialDebug.Common.Domain"
+             xmlns:conve="clr-namespace:SerialDebug.Converters"
+             xmlns:val="clr-namespace:SerialDebug.VaildationRules"
+             xmlns:be="http://schemas.microsoft.com/xaml/behaviors"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800"
+
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             TextElement.FontWeight="Regular"
+             TextElement.FontSize="13"
+             TextOptions.TextFormattingMode="Ideal"
+             TextOptions.TextRenderingMode="Auto"
+             Background="{DynamicResource MaterialDesignPaper}"
+             FontFamily="{DynamicResource MaterialDesignFont}">
+
+    <materialDesign:TransitioningContent>
+        <materialDesign:TransitioningContent.OpeningEffects>
+            <materialDesign:TransitionEffect Kind="FadeIn"></materialDesign:TransitionEffect>
+        </materialDesign:TransitioningContent.OpeningEffects>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer Grid.Column="0">
+                <StackPanel Margin="8, 8, 16, 0">
+                    <!--串口配置-->
+                    <materialDesign:Card Padding="16">
+                        <StackPanel>
+                            <DockPanel LastChildFill="False">
+                                <TextBlock Text="串口配置"
+                                           Style="{StaticResource MaterialDesignTitleMediumTextBlock}"
+                                           DockPanel.Dock="Left" VerticalAlignment="Center" />
+                                <Button
+                                    Command="{x:Static materialDesign:Flipper.FlipCommand}"
+                                    DockPanel.Dock="Right"
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource MaterialDesignIconButton}"
+                                    ToolTip="MaterialDesignIconButton">
+                                    <materialDesign:PackIcon
+                                        ToolTip="切换到网络通信模式"
+                                        Kind="Web" />
+                                </Button>
+                            </DockPanel>
+                            <!--串口号-->
+                            <DockPanel LastChildFill="False" Height="40">
+                                <TextBlock Text="串口号: " FontSize="18" DockPanel.Dock="Left"
+                                           Margin="0, 0, 10, 0"
+                                           VerticalAlignment="Center" />
+                                <ComboBox SelectedItem="{Binding CurSelectedSerialPortItem}"
+                                          ItemsSource="{Binding SerialPortNumberList}" Width="200"
+                                          DockPanel.Dock="Right"
+                                          Style="{StaticResource MaterialDesignComboBox}"
+                                          materialDesign:HintAssist.Hint="请选择串口">
+                                    <be:Interaction.Triggers>
+                                        <be:EventTrigger EventName="SelectionChanged">
+                                            <be:InvokeCommandAction
+                                                Command="{Binding SerialPortConfiureUpdateCommand}" />
+                                        </be:EventTrigger>
+                                    </be:Interaction.Triggers>
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <DockPanel LastChildFill="False">
+                                                <TextBlock Text="{Binding Index}" Margin="0, 0, 10, 0">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger
+                                                                    Binding="{Binding RelativeSource={RelativeSource AncestorType=ComboBoxItem, Mode=FindAncestor}}"
+                                                                    Value="{x:Null}">
+                                                                    <Setter Property="HorizontalAlignment"
+                                                                            Value="Center" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding Manu}" Opacity="0.5">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger
+                                                                    Binding="{Binding RelativeSource={RelativeSource AncestorType=ComboBoxItem, Mode=FindAncestor}}"
+                                                                    Value="{x:Null}">
+                                                                    <Setter Property="Visibility"
+                                                                            Value="Hidden" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Button Style="{StaticResource MaterialDesignIconButton}"
+                                        DockPanel.Dock="Right"
+                                        VerticalAlignment="Center" Command="{Binding ReferSerialPortList}"
+                                        Cursor="Hand">
+                                    <materialDesign:PackIcon Kind="Restore" />
+                                </Button>
+                            </DockPanel>
+                            <!--波特率-->
+                            <DockPanel LastChildFill="False" Height="40">
+                                <TextBlock Text="波特率: " FontSize="18" DockPanel.Dock="Left"
+                                           VerticalAlignment="Center" />
+                                <ComboBox x:Name="baudRateComboBox"
+                                          SelectedItem="{Binding CurSelectedBaudRate}"
+                                          ItemsSource="{Binding BaudRateList}" Width="200"
+                                          DockPanel.Dock="Right"
+                                          materialDesign:HintAssist.Hint="请选择波特率" IsEditable="True">
+                                    <be:Interaction.Triggers>
+                                        <be:EventTrigger EventName="SelectionChanged">
+                                            <be:InvokeCommandAction
+                                                Command="{Binding SerialPortConfiureUpdateCommand}" />
+                                        </be:EventTrigger>
+                                    </be:Interaction.Triggers>
+                                </ComboBox>
+                            </DockPanel>
+                            <!--数据位-->
+                            <DockPanel LastChildFill="False" Height="40">
+
+                                <TextBlock Text="数据位: " FontSize="18" VerticalAlignment="Center"
+                                           DockPanel.Dock="Left" />
+                                <ComboBox SelectedItem="{Binding CurSelectedDataBit}" DockPanel.Dock="Right"
+                                          Width="200" ItemsSource="{Binding DataBitList}">
+                                    <be:Interaction.Triggers>
+                                        <be:EventTrigger EventName="SelectionChanged">
+                                            <be:InvokeCommandAction
+                                                Command="{Binding SerialPortConfiureUpdateCommand}" />
+                                        </be:EventTrigger>
+                                    </be:Interaction.Triggers>
+                                </ComboBox>
+                            </DockPanel>
+                            <!--校验位-->
+                            <DockPanel LastChildFill="False" Height="40">
+
+                                <TextBlock Text="校验位: " FontSize="18" VerticalAlignment="Center"
+                                           DockPanel.Dock="Left" />
+                                <ComboBox SelectedItem="{Binding CurSelectedParity}" DockPanel.Dock="Right"
+                                          Width="200" ItemsSource="{Binding ParityList}">
+                                    <be:Interaction.Triggers>
+                                        <be:EventTrigger EventName="SelectionChanged">
+                                            <be:InvokeCommandAction
+                                                Command="{Binding SerialPortConfiureUpdateCommand}" />
+                                        </be:EventTrigger>
+                                    </be:Interaction.Triggers>
+                                </ComboBox>
+                            </DockPanel>
+                            <!--停止位-->
+                            <DockPanel LastChildFill="False" Height="40">
+
+                                <TextBlock Text="停止位: " FontSize="18" VerticalAlignment="Center"
+                                           DockPanel.Dock="Left" />
+                                <ComboBox SelectedItem="{Binding CurSelectedStop}" DockPanel.Dock="Right"
+                                          Width="200" ItemsSource="{Binding StopList}">
+                                    <be:Interaction.Triggers>
+                                        <be:EventTrigger EventName="SelectionChanged">
+                                            <be:InvokeCommandAction
+                                                Command="{Binding SerialPortConfiureUpdateCommand}" />
+                                        </be:EventTrigger>
+                                    </be:Interaction.Triggers>
+                                </ComboBox>
+                            </DockPanel>
+                            <!--打开串口-->
+                            <Button Margin="10" Content="打开串口" Command="{Binding OpenSerialPortCommand}"
+                                    x:Name="connectButton">
+                            </Button>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <Separator Style="{StaticResource MaterialDesignSeparator}" Background="Transparent"></Separator>
+
+                    <!--接收区设置-->
+                    <materialDesign:Card Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="接受区配置" Style="{StaticResource MaterialDesignTitleMediumTextBlock}"></TextBlock>
+                            <CheckBox x:Name="hexDisplayCheckBox" Content="十六进制显示"
+                                      materialDesign:CheckBoxAssist.CheckBoxSize="25">
+                            </CheckBox>
+                            <CheckBox Content="暂停接收" IsChecked="{Binding ReviceAreaStopRevice}"
+                                      materialDesign:CheckBoxAssist.CheckBoxSize="25" />
+                            <UniformGrid Rows="1" Margin="0, 10, 0, 0">
+                                <Button Style="{StaticResource MaterialDesignPaperButton}" Content="保存数据"
+                                        Width="100" Command="{Binding SaveMessageToFileCommand}" />
+                                <Button Style="{StaticResource MaterialDesignPaperButton}" Content="清空数据"
+                                        Width="100" Command="{Binding ClearDisplayDataCommand}" />
+                            </UniformGrid>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <Separator Style="{StaticResource MaterialDesignSeparator}" Background="Transparent"></Separator>
+
+                    <!--发送区配置-->
+                    <materialDesign:Card Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="发送区配置" Style="{StaticResource MaterialDesignTitleMediumTextBlock}"></TextBlock>
+                            <CheckBox Content="十六进制发送" materialDesign:CheckBoxAssist.CheckBoxSize="25"
+                                      x:Name="hexSendCheckBox" IsChecked="{Binding IsHexSend}" />
+                            <DockPanel LastChildFill="False">
+                                <CheckBox Content="定时发送" materialDesign:CheckBoxAssist.CheckBoxSize="25"
+                                          IsChecked="{Binding IsTimerSend}" DockPanel.Dock="Left" />
+                                <TextBox
+                                    materialDesign:HintAssist.Hint="自动发送周期"
+                                    materialDesign:TextFieldAssist.SuffixText="ms"
+                                    DockPanel.Dock="Right"
+                                    IsEnabled="{Binding  IsTimerSend}"
+                                    Width="120">
+                                    <TextBox.Text>
+                                        <Binding Path="SendCycleMill" UpdateSourceTrigger="PropertyChanged">
+                                            <Binding.ValidationRules>
+                                                <val:TimerCycleValidationRule />
+                                            </Binding.ValidationRules>
+                                        </Binding>
+                                    </TextBox.Text>
+                                </TextBox>
+                            </DockPanel>
+                            <CheckBox Content="发送新行" materialDesign:CheckBoxAssist.CheckBoxSize="25"
+                                      IsChecked="{Binding IsSendNewLine}" />
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <Separator Style="{StaticResource MaterialDesignSeparator}" Background="Transparent"></Separator>
+
+                    <!--通用设置-->
+                    <materialDesign:Card Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="通用配置" Style="{StaticResource MaterialDesignTitleMediumTextBlock}"></TextBlock>
+                            <DockPanel LastChildFill="False" Height="40">
+                                <TextBlock Text="编码格式: " FontSize="18" VerticalAlignment="Center"
+                                           DockPanel.Dock="Left" />
+                                <ComboBox x:Name="charecterEncodingComoBox"
+                                          SelectedItem="{Binding CurSelectedCharacterEncoding}"
+                                          DockPanel.Dock="Right" Width="200"
+                                          ItemsSource="{Binding CharacterEncodings}">
+                                    <be:Interaction.Triggers>
+                                        <be:EventTrigger EventName="SelectionChanged">
+                                            <be:InvokeCommandAction
+                                                Command="{Binding SerialPortConfiureUpdateCommand}" />
+                                        </be:EventTrigger>
+                                    </be:Interaction.Triggers>
+                                </ComboBox>
+                            </DockPanel>
+                            <UniformGrid Rows="1">
+                                <CheckBox IsChecked="{Binding RTSCheck}" Content="RTS"
+                                          materialDesign:CheckBoxAssist.CheckBoxSize="30">
+                                    <be:Interaction.Triggers>
+                                        <be:EventTrigger EventName="Click">
+                                            <be:InvokeCommandAction Command="{Binding DTROrRTSStateChangeCommand}" />
+                                        </be:EventTrigger>
+                                    </be:Interaction.Triggers>
+                                </CheckBox>
+                                <CheckBox IsChecked="{Binding DTRCheck}" Content="RTS"
+                                          materialDesign:CheckBoxAssist.CheckBoxSize="30">
+                                    <be:Interaction.Triggers>
+                                        <be:EventTrigger EventName="Click">
+                                            <be:InvokeCommandAction Command="{Binding DTROrRTSStateChangeCommand}" />
+                                        </be:EventTrigger>
+                                    </be:Interaction.Triggers>
+                                </CheckBox>
+                            </UniformGrid>
+                            <Separator Style="{StaticResource MaterialDesignSeparator}"></Separator>
+                            <!--换行符-->
+                            <DockPanel LastChildFill="False">
+                                <TextBlock DockPanel.Dock="Left" Text="换行符: " FontSize="18" VerticalAlignment="Center"></TextBlock>
+                                <ComboBox SelectedItem="{Binding NewLineSelectedItem}" DockPanel.Dock="Right"
+                                          Width="200" ItemsSource="{Binding NewLineMenuModels}" >
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding DisplayContent}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                
+                            </DockPanel>
+                        </StackPanel>
+                    </materialDesign:Card>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid Grid.Column="1" Margin="8, 8, 8, 0">
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition Height="200" />
+                </Grid.RowDefinitions>
+                <materialDesign:Card Padding="8">
+                    <TextBox x:Name="displayReceiveContent"
+                             materialDesign:HintAssist.Hint="接受内容"
+                             Style="{StaticResource MaterialDesignComboBoxEditableTextBox}" IsReadOnly="True"
+                             TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontSize="16" />
+                </materialDesign:Card>
+                <materialDesign:Card Grid.Row="1" Margin="0, 8, 0, 0" Padding="16">
+                    <DockPanel LastChildFill="True">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource MaterialDesignRaisedButton}"
+                                Height="auto" Width="100" Margin="10, 0, 0, 0" Command="{Binding SendDataCommand}"
+                                Cursor="Hand">
+                            <materialDesign:PackIcon Kind="Send" />
+                        </Button>
+                        <UniformGrid DockPanel.Dock="Bottom" Rows="1" Margin="0, 5, 0, 0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="发送: " />
+                                <TextBlock Text="{Binding SendCount}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="接收: " />
+                                <TextBlock Text="{Binding ReceiveCount}" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <TextBox FontSize="16" x:Name="inputSendContent"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 materialDesign:HintAssist.Hint="请输入要发送的内容"
+                                 Text="{Binding SendConetnt, UpdateSourceTrigger=PropertyChanged}"
+                                 TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+                    </DockPanel>
+                </materialDesign:Card>
+            </Grid>
+        </Grid>
+    </materialDesign:TransitioningContent>
+</UserControl>
